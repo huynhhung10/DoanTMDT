@@ -1,0 +1,130 @@
+﻿@page "/admin/brands"
+@inject IBrandService BrandService
+@implements IDisposable
+@attribute [Authorize(Roles = "Admin")]
+<h3>Brands</h3>
+
+<div class="header">
+    <div class="col">Name</div>
+    <div class="col">Icon</div>
+    <div class="col">Url</div>
+    <div class="col">Visible</div>
+    <div class="col"></div>
+</div>
+
+@foreach (var category in BrandService.AdminBrands)
+{
+    @if (category.Editing)
+    {
+        <EditForm Model="editingBrand" OnSubmit="UpdateBrand">
+            <div class="row">
+                <div class="col">
+                    <InputText @bind-Value="editingBrand.BrandName" class="form-control"></InputText>
+                </div>
+                <div class="col">
+                    <InputFile id="icon" class="form-control" OnChange="OnFileChange"  />
+              
+                </div>
+                <div class="col">
+                    <InputText @bind-Value="editingBrand.BrandUrl" class="form-control"></InputText>
+                </div>
+                <div class="col col-visible">
+                    <InputCheckbox @bind-Value="editingBrand.Visible" style="transform: scale(1.5,1.5);"></InputCheckbox>
+                </div>
+                <div class="col">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="oi oi-cloud-upload"></i>
+                    </button>
+                    <button class="btn btn-primary" @onclick="CancelEditing">
+                        <i class="oi oi-circle-x"></i>
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col">
+                @category.BrandName
+            </div>
+             <div class="col">
+             <img style="width:160px;height:160px" src="@category.Icon" />
+                
+            </div>
+            <div class="col">
+                @category.BrandUrl
+            </div>
+            <div class="col col-visible">
+                <span>@(category.Visible ? "✔️" : "")</span>
+            </div>
+            <div class="col">
+                <button class="btn btn-primary" @onclick="(() => EditCategory(category))">
+                    <i class="oi oi-pencil"></i>
+                </button>
+                <button class="btn btn-primary" @onclick="(() => DeleteBrand(category.Id))">
+                    <i class="oi oi-trash"></i>
+                </button>
+            </div>
+        </div>
+    }
+}
+<button class="btn btn-primary" @onclick="CreateNewBrand">
+    <i class="oi oi-plus"></i> Add new Brand
+</button>
+
+@code {
+    Brand editingBrand = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await BrandService.GetAdminBrands();
+        BrandService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        BrandService.OnChange -= StateHasChanged;
+    }
+
+    private void CreateNewBrand()
+    {
+        editingBrand = BrandService.CreateNewBrand();
+    }
+
+    private void EditCategory(Brand brand)
+    {
+        brand.Editing = true;
+        editingBrand = brand;
+    }
+
+    private async Task UpdateBrand()
+    {
+        if (editingBrand.IsNew)
+            await BrandService.AddBrand(editingBrand);
+        else
+            await BrandService.UpdateBrand(editingBrand);
+        editingBrand = new Brand();
+    }
+
+    private async Task CancelEditing()
+    {
+        editingBrand = new Brand();
+        await BrandService.GetAdminBrands();
+    }
+
+    private async Task DeleteBrand(int id)
+    {
+        await BrandService.DeleteBrand(id);
+    }
+
+    async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var format = "image/png";
+        var resizedImage = await e.File.RequestImageFileAsync(format, 200, 200);
+        var buffer = new byte[resizedImage.Size];
+        await resizedImage.OpenReadStream().ReadAsync(buffer);
+        var imageData = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        editingBrand.Icon = imageData;
+    }
+}

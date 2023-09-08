@@ -1,0 +1,69 @@
+﻿@page "/login"
+@inject IAuthService AuthService
+@inject ILocalStorageService LocalStorage
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ICartService CartService
+
+<div class="alert alert-danger" role="alert">
+        <p>@errorMessage</p>
+    </div>
+
+    <h3>Login</h3>
+        <div class="card">
+            <div class="card-body" style="background-image:linear-gradient(180deg, rgba(201, 179, 242, 1)25%, rgba(54, 234, 219, 0.91)75%);">
+                <h5 class="card-title">Please enter your details</h5>
+                    <EditForm Model="user" OnValidSubmit="HandleLogin">
+                        <DataAnnotationsValidator />
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <InputText id="email" @bind-Value="user.Email" class="form-control" />
+                            <ValidationMessage For="@(() => user.Email)" />
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <InputText id="password" @bind-Value="user.Password" class="form-control" type="password" />
+                            <ValidationMessage For="@(() => user.Password)" />
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">Login</button>
+                        <a href="/Register" class="text-info" style="float:right; color: black">Register here</a>
+                    </EditForm>
+        </div>
+    </div>
+
+
+@code {
+    private UserLogin user = new UserLogin();
+
+    private string errorMessage = string.Empty;
+
+    private string returnUrl = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+       if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("returnUrl", out var url))
+        {
+            returnUrl = url;
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var result = await AuthService.Login(user);
+        if (result.Success)
+        {
+            errorMessage = string.Empty;
+
+            await LocalStorage.SetItemAsync("authToken", result.Data);
+            await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            await CartService.StoreCartItems(true);
+            await CartService.GetCartItemsCount();
+            NavigationManager.NavigateTo(returnUrl);
+        }
+        else
+        {
+            errorMessage = result.Message;
+        }
+    }
+}

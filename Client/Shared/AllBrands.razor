@@ -1,0 +1,48 @@
+﻿@inject IBrandService BrandService
+@implements IDisposable
+
+<center><h2>All Brands</h2></center>
+@if (BrandService.Brands == null || BrandService.Brands.Count == 0)
+{
+    <span>Wait</span>
+}
+else
+{
+    
+        @foreach (var product in BrandService.Brands)
+        {
+            @if (product.Icon == null)
+            {
+            <div class="container">
+                <div class="brand-all">
+                    <div>
+                        <a href="/ProductbyBrand/brand/@product.BrandUrl/1">
+                          
+                                <img src="@product.Icon">
+                            
+                           
+                        </a>
+                    </div>
+    
+                    
+                </div>
+             </div>
+            }
+            
+        }
+    
+}
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await BrandService.GetBrands();
+        BrandService.OnChange += StateHasChanged;
+
+    }
+
+    public void Dispose()
+    {
+        BrandService.OnChange -= StateHasChanged;
+    }
+}

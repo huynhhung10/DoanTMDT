@@ -1,0 +1,50 @@
+﻿@page "/ProductbyBrand"
+@page "/ProductbyBrand/search/{searchText}/{page:int}"
+@page "/ProductbyBrand/brand/{brandUrl}/{page:int}"
+
+@inject ICategoryService CategoryService;
+@inject IProductService ProductService
+
+
+@if (searchText == null && brandUrl == null && categoryUrl == null)
+{
+    <AllProducts />
+}
+else
+{
+    <ProductListBrand />
+}
+   
+
+@code {
+   
+    [Parameter]
+    public string? brandUrl { get; set; } = null;
+
+    [Parameter]
+    public string? categoryUrl { get; set; } = null;
+
+    [Parameter]
+    public string? searchText { get; set; } = null;
+
+    [Parameter]
+    public int page { get; set; } = 1;
+
+     private Category category = null;
+    protected override async Task OnParametersSetAsync()
+    {
+       if (searchText != null)
+        {
+            await ProductService.SearchProducts(searchText, page);
+        }
+         else if (categoryUrl !=null){
+            await ProductService.PagesCategory(categoryUrl, page);
+            
+        }
+        else
+        {
+            await ProductService.PagesBrand(brandUrl,page);
+        }
+        
+    }
+}

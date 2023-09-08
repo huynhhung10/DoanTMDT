@@ -1,0 +1,51 @@
+﻿@page "/register"
+@inject IAuthService AuthService
+
+
+<div class="@messageCssClass">
+    <p>@message</p>
+    </div>
+
+<h3>Register</h3>
+<div class="card">
+    <div class="card-body" style="background-image:linear-gradient(180deg, rgba(201, 179, 242, 1)25%, rgba(54, 234, 219, 0.91)75%);">
+        <h5 class="card-title">Please enter your details</h5>
+            <EditForm Model="user" OnValidSubmit="HandleRegistration">
+                <DataAnnotationsValidator />
+                <div class="mb-3">
+                    <label for="email">Email</label>
+                    <InputText id="email" @bind-Value="user.Email" class="form-control" />
+                    <ValidationMessage For="@(() => user.Email)" />
+                </div>
+                <div class="mb-3">
+                    <label for="password">Password</label>
+                    <InputText id="password" @bind-Value="user.Password" class="form-control" type="password" />
+                    <ValidationMessage For="@(() => user.Password)" />
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <InputText id="confirmPassword" @bind-Value="user.ConfirmPassword" class="form-control" type="password" />
+                    <ValidationMessage For="@(() => user.ConfirmPassword)" />
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+                
+            </EditForm>
+    </div>
+</div>
+
+@code {
+    UserRegister user = new UserRegister();
+
+    string message = string.Empty;
+    string messageCssClass = string.Empty;
+
+    async Task HandleRegistration()
+    {
+        var result = await AuthService.Register(user);
+        message = result.Message;
+        if (result.Success)
+            messageCssClass = "text-success";
+        else
+            messageCssClass = "text-danger";
+    }
+}
